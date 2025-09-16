@@ -248,4 +248,24 @@ JOIN products P
 GROUP BY C.name
 HAVING COUNT(DISTINCT P.category) = (
     SELECT COUNT(DISTINCT category) FROM products
-);
+);  
+ highest revenue product per city 
+           WITH ranked AS (
+    SELECT 
+        C.city,
+        P.name AS product_name,
+        SUM(O.quantity * P.price) AS total_revenue,
+        RANK() OVER (
+            PARTITION BY C.city
+            ORDER BY SUM(O.quantity * P.price) DESC
+        ) AS revenue_rank
+    FROM products P
+    JOIN orders O 
+        ON P.product_id = O.product_id
+    JOIN customers C
+        ON C.customer_id = O.customer_id
+    GROUP BY C.city, P.name
+)
+SELECT *
+FROM ranked
+WHERE revenue_rank = 1;
